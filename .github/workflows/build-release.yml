@@ -50,17 +50,6 @@ jobs:
             makepkg -si --noconfirm --needed
           '
 
-      - name: Configure local pacman repo
-        run: |
-          set -euo pipefail
-          mkdir -p "$GITHUB_WORKSPACE/output"
-          cat >> /etc/pacman.conf <<EOF
-
-[localrepo]
-SigLevel = Optional TrustAll
-Server = file://$GITHUB_WORKSPACE/output
-EOF
-
       - name: Build every package directory with pikaur
         id: build
         run: |
