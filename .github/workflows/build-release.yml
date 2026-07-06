@@ -18,6 +18,7 @@ concurrency:
 
 env:
   RELEASE_TAG: repository
+  REPO_DB_NAME: my-arch-repo
 
 jobs:
   build:
@@ -71,17 +72,8 @@ jobs:
 
 
             echo "=== [$dir] building with paru -B ==="
-            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE' && paru --noconfirm -B '$GITHUB_WORKSPACE/$dir'"                 >/tmp/build-"$dir".log 2>&1; then
+            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE' && paru --noconfirm -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
               find "$dir" -maxdepth 1 -name '*.pkg.tar.zst' -exec cp -f {} output/ \;
-              (
-                set -euo pipefail
-                cd output
-                shopt -s nullglob
-                pkgs=( *.pkg.tar.zst )
-                if (( ${#pkgs[@]} > 0 )); then
-                  repo-add repository.db.tar.gz "${pkgs[@]}"
-                fi
-              )
               pacman -Sy --noconfirm >/dev/null 2>&1 || true
               BUILT+=("$dir")
               echo "=== [$dir] OK ==="
@@ -104,11 +96,18 @@ jobs:
             exit 1
           fi
 
-      - name: Regenerate pacman repo database
+      - name: Generate pacman repo database once
         run: |
           set -euo pipefail
           cd output
-          repo-add repository.db.tar.gz *.pkg.tar.zst
+          shopt -s nullglob
+          pkgs=( *.pkg.tar.zst )
+          if (( ${#pkgs[@]} == 0 )); then
+            echo "::error::No package artifacts found in output/."
+            exit 1
+          fi
+          rm -f "${REPO_DB_NAME}.db" "${REPO_DB_NAME}.files"                 "${REPO_DB_NAME}.db.tar.gz" "${REPO_DB_NAME}.files.tar.gz"                 "${REPO_DB_NAME}.db.tar.gz.old" "${REPO_DB_NAME}.files.tar.gz.old"
+          repo-add "${REPO_DB_NAME}.db.tar.gz" "${pkgs[@]}"
           ls -la
 
       - name: Publish to fixed GitHub Release (overwrite)
@@ -121,21 +120,17 @@ jobs:
 
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             echo "=== Release '$TAG' exists, clearing old assets ==="
-            gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].name' \
-              | while read -r name; do
+            gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].name'               | while read -r name; do
                   [[ -n "$name" ]] || continue
                   echo "Deleting old asset: $name"
                   gh release delete-asset "$TAG" "$name" --repo "$REPO" -y || true
                 done
           else
             echo "=== Creating release '$TAG' ==="
-            gh release create "$TAG" --repo "$REPO" \
-              --title "Arch Package Repository" \
-              --notes "Auto-built pacman repository."
+            gh release create "$TAG" --repo "$REPO"               --title "Arch Package Repository"               --notes "Auto-built pacman repository."
           fi
 
           echo "=== Uploading fresh assets ==="
           gh release upload "$TAG" output/* --repo "$REPO" --clobber
 
-          gh release edit "$TAG" --repo "$REPO" \
-            --notes "Auto-built pacman repository. Last updated: $(date -u '+%Y-%m-%d %H:%M UTC'). Built: ${{ steps.build.outputs.built }}. Failed: ${{ steps.build.outputs.failed }}"
+          gh release edit "$TAG" --repo "$REPO"             --notes "Auto-built pacman repository. Last updated: $(date -u '+%Y-%m-%d %H:%M UTC'). Built: ${{ steps.build.outputs.built }}. Failed: ${{ steps.build.outputs.failed }}"
