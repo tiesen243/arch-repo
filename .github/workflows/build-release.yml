@@ -109,7 +109,7 @@ jobs:
             fi
 
             echo "Building $dir with paru"
-            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE/$dir' && paru --noconfirm --skipreview --useask --removemake --cleanafter --nocheck -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
+            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE/$dir' && paru --noconfirm --skipreview --useask --removemake --nocheck -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
               find "$dir" -maxdepth 1 -name '*.pkg.tar.zst' -exec mv -f {} output/ \;
               pacman -Sy --noconfirm >/dev/null 2>&1 || true
               BUILT+=("$dir")
@@ -118,6 +118,7 @@ jobs:
               tail -n 120 /tmp/build-"$dir".log || true
               FAILED+=("$dir")
             fi
+            sudo -u builder rm -rf "$GITHUB_WORKSPACE/$dir/src" "$GITHUB_WORKSPACE/$dir/pkg"
           done
 
           echo "built=${BUILT[*]}" >> "$GITHUB_OUTPUT"

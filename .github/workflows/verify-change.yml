@@ -112,7 +112,7 @@ jobs:
           for dir in "${packages[@]}"; do
             [[ -n "$dir" ]] || continue
             echo "Building $dir with paru"
-            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE' && paru --noconfirm --skipreview --useask --removemake --cleanafter --nocheck -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
+            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE' && paru --noconfirm --skipreview --useask --removemake --nocheck -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
               BUILT+=("$dir")
               echo "Build OK: $dir"
             else
@@ -120,6 +120,7 @@ jobs:
               tail -n 120 /tmp/build-"$dir".log || true
               FAILED+=("$dir")
             fi
+            sudo -u builder rm -rf "$GITHUB_WORKSPACE/$dir/src" "$GITHUB_WORKSPACE/$dir/pkg"
             pacman -Sy --noconfirm >/dev/null 2>&1 || true
           done
 
