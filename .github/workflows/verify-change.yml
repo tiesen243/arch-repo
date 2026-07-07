@@ -1,0 +1,119 @@
+name: Build Changed AUR Packages
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-changed-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  detect-and-build:
+    runs-on: ubuntu-latest
+    container:
+      image: cachyos/cachyos-v3
+    steps:
+      - name: Install base dependencies
+        run: |
+          set -euo pipefail
+          pacman -Syu --noconfirm --needed git sudo rsync github-cli fakeroot binutils pacman-contrib paru
+          id builder >/dev/null 2>&1 || useradd -m builder
+          grep -q '^builder ALL=(ALL) NOPASSWD: ALL$' /etc/sudoers || echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+      - name: Insert DisableSandboxNetwork into pacman.conf options
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp)
+          awk '
+            BEGIN { inserted=0 }
+            /^\[options\]$/ && !inserted { print; print "DisableSandboxNetwork"; inserted=1; next }
+            { print }
+            END { if (!inserted) exit 1 }
+          ' /etc/pacman.conf > "$tmp"
+          cat "$tmp" > /etc/pacman.conf
+          rm -f "$tmp"
+          grep -n 'DisableSandboxNetwork' /etc/pacman.conf
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix workspace ownership for build user
+        run: chown -R builder:builder "$GITHUB_WORKSPACE"
+
+      - name: Detect changed package directories
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_ref='${{ github.event.pull_request.base.sha }}'
+          head_ref='${{ github.event.pull_request.head.sha }}'
+
+          mapfile -t changed_files < <(git diff --name-only --diff-filter=AM "$base_ref" "$head_ref")
+
+          declare -A seen=()
+          changed_dirs=()
+
+          for path in "${changed_files[@]}"; do
+            [[ -z "$path" ]] && continue
+            topdir="${path%%/*}"
+            [[ "$topdir" == "$path" ]] && continue
+            [[ "$topdir" == ".github" ]] && continue
+            [[ -f "$topdir/PKGBUILD" ]] || continue
+            if [[ -z "${seen[$topdir]:-}" ]]; then
+              seen[$topdir]=1
+              changed_dirs+=("$topdir")
+            fi
+          done
+
+          if (( ${#changed_dirs[@]} == 0 )); then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "packages=" >> "$GITHUB_OUTPUT"
+            echo "### Build summary" >> "$GITHUB_STEP_SUMMARY"
+            echo "- No added or modified package directories detected." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          printf 'packages=%s' "${changed_dirs[*]}" >> "$GITHUB_OUTPUT"
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "### Changed packages" >> "$GITHUB_STEP_SUMMARY"
+          for pkg in "${changed_dirs[@]}"; do
+            echo "- $pkg" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Build changed packages with paru
+        if: steps.changed.outputs.has_changes == 'true'
+        shell: bash
+        run: |
+          set -uo pipefail
+          read -r -a packages <<< "${{ steps.changed.outputs.packages }}"
+          BUILT=()
+          FAILED=()
+
+          for dir in "${packages[@]}"; do
+            [[ -n "$dir" ]] || continue
+            echo "=== [$dir] building with paru -B ==="
+            if sudo -u builder bash -lc "cd '$GITHUB_WORKSPACE' && paru --noconfirm -B '$GITHUB_WORKSPACE/$dir'" >/tmp/build-"$dir".log 2>&1; then
+              BUILT+=("$dir")
+              echo "=== [$dir] OK ==="
+            else
+              echo "::warning::[$dir] build failed"
+              tail -n 120 /tmp/build-"$dir".log || true
+              FAILED+=("$dir")
+            fi
+            pacman -Sy --noconfirm >/dev/null 2>&1 || true
+          done
+
+          echo "### Build results" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Built OK: ${BUILT[*]:-none}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Failed: ${FAILED[*]:-none}" >> "$GITHUB_STEP_SUMMARY"
+
+          if (( ${#FAILED[@]} > 0 )); then
+            echo "::error::Some changed packages failed to build: ${FAILED[*]}"
+            exit 1
+          fi

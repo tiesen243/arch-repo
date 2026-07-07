@@ -2,8 +2,6 @@ all-contributors-cli
 catppuccin-fcitx5-git
 catppuccin-obs-theme-git
 catppuccin-whiskers-bin
-coccoc-browser-stable
-doasedit-nhk
 equicord-installer-bin
 icu74
 libgraph
@@ -13,6 +11,7 @@ mcontrolcenter-bin
 msi-ec-dkms-git
 nmtui-go
 obs-pipewire-audio-capture
+osu-lazer
 osu-lazer-bin
 osu-mime
 physlock
@@ -23,4 +22,3 @@ teamviewer
 ventoy
 xclicker
 xmousepasteblock
-zalo-for-linux-bin

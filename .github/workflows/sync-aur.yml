@@ -1,7 +1,7 @@
 name: Sync AUR Packages
 on:
   schedule:
-    - cron: '0 2 * * *' # 02:00 UTC hang ngay. Doi neu can gio khac.
+    - cron: '0 20 * * *'
   workflow_dispatch: {}
   push:
     branches: [main]
