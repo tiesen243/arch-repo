@@ -28,10 +28,10 @@ jobs:
         run: |
           set -euo pipefail
           echo "Downloading CachyOS v3 makepkg.conf..."
-          curl -sLo /etc/makepkg.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v3/makepkg.conf
+          curl -sLo /etc/makepkg.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v4/makepkg.conf
           echo "Downloading CachyOS v3 rust.conf..."
           mkdir -p /etc/makepkg.conf.d
-          curl -sLo /etc/makepkg.conf.d/rust.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v3/rust.conf
+          curl -sLo /etc/makepkg.conf.d/rust.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v4/rust.conf
           sed -i 's/^PKGDEST=/#PKGDEST=/g' /etc/makepkg.conf
           sed -i 's/^LOGDEST=/#LOGDEST=/g' /etc/makepkg.conf
 
@@ -60,9 +60,9 @@ jobs:
         id: changed-files
         uses: tj-actions/changed-files@v47.0.6
         with:
-          dir_names: 'true'
-          dir_names_max_depth: '1'
-          dir_names_exclude_current_dir: 'true'
+          dir_names: "true"
+          dir_names_max_depth: "1"
+          dir_names_exclude_current_dir: "true"
           files: |
             */**
             !.github/**

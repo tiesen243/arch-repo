@@ -1,31 +1,80 @@
-all-contributors-cli
-catppuccin-fcitx5-git
-catppuccin-obs-theme-git
-catppuccin-whiskers-bin
-equicord-installer-bin
-guile1.8
-icu74
-libgraph
-lightworks
+# System utilities
+bluez
+bluez-utils
+power-profiles-daemon
+python-gobject
+ufw
+upower
+
+# DE / WM
+hyprland
+xdg-desktop-portal-hyprland
+niri
+xdg-desktop-portal-wlr
+
+# Hyprland & Shell components
+hypridle
+hyprpolkitagent
+quickshell
+
+# Fonts
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+otf-geist
+otf-geist-mono-nerd
+
+# Terminal & CLI tools
+7zip
+btop
+fastfetch 
+fzf
+github-cli
+kitty
+lazygit
+lsd
+ripgrep
+unzip
+zsh
+
+# Docker
+docker
+docker-buildx
+docker-compose
+
+# Media & notifications
+brightnessctl
+cliphist
+ffmpeg
+grim
+libnotify
+playerctl
+slurp
+wl-clipboard
+
+# Theming
+adw-gtk-theme
+capitaine-cursors
+matugen
+
+# File manager
+gvfs
+thunar
+thunar-volman
+tumbler
+
+# Vietnamese input method
+fcitx5-config-qt
+fcitx5-lotus-bin
+
+# Utilities
 localsend
-lua-pam-git
-mcontrolcenter-bin
-msi-ec-dkms-git
-networkmanager-iwd
-nmtui-go
-obs-pipewire-audio-capture
-osu-lazer-bin
-osu-mime
-physlock
-pwvucontrol
-rhythmbox-plugin-tray-icon
-ripdrag
-rustdesk
-sfml2
-snapper-rollback
-teamviewer
-ventoy
-vscodium
-wezterm-git
-xclicker
-xmousepasteblock
+neovim
+obs-studio
+waydroid
+
+# Browser
+chromium
+firefox
+zen-browser-bin
+
