@@ -24,12 +24,12 @@ jobs:
           id builder >/dev/null 2>&1 || useradd -m builder
           grep -q '^builder ALL=(ALL) NOPASSWD: ALL$' /etc/sudoers || echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-      - name: Configure makepkg for x86-64-v3 optimization
+      - name: Configure makepkg for x86-64-v4 optimization
         run: |
           set -euo pipefail
-          echo "Downloading CachyOS v3 makepkg.conf..."
+          echo "Downloading CachyOS v4 makepkg.conf..."
           curl -sLo /etc/makepkg.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v4/makepkg.conf
-          echo "Downloading CachyOS v3 rust.conf..."
+          echo "Downloading CachyOS v4 rust.conf..."
           mkdir -p /etc/makepkg.conf.d
           curl -sLo /etc/makepkg.conf.d/rust.conf https://raw.githubusercontent.com/CachyOS/docker-makepkg/refs/heads/master/docker-makepkg-v4/rust.conf
           sed -i 's/^PKGDEST=/#PKGDEST=/g' /etc/makepkg.conf
