@@ -53,6 +53,7 @@ slurp
 wl-clipboard
 
 # Theming
+adw-gtk3
 adw-gtk-theme
 capitaine-cursors
 matugen
