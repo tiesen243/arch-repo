@@ -13,7 +13,7 @@ arch=('any')
 source=("https://github.com/docker/compose/archive/$pkgver.tar.gz"
         "remove-requires-upper-bound.patch")
 url="https://www.docker.com/"
-license=("BSD")
+license="BSD"
 sha256sums=('cc11f8281f0cf99fcb5502edb6e0d49caca26f4a11570b8ad68943bd3a97dd5c'
             '0d4102403070c290e0817828f634c670b753ab79d80f1e1566b1b0aaf77ee9b9')
 
